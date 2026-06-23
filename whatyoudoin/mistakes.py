@@ -1,9 +1,7 @@
-"""Scan code for 'vibe code' tells — the little signs it was AI-generated.
+"""Scan code for 'vibe code' tells — signs it was AI-generated.
 
-Pure and dependency-free, so it's unit-testable without any API keys (unlike the
-Deepgram/Claude paths). `scan` runs every rule in RULES over the source text and
-returns one finding dict per rule that fired. Add a tell by writing a small
-function and dropping it into RULES.
+Pure and dependency-free, so it's unit-testable. Add a tell: write a small rule
+function (return a finding dict or None) and drop it into RULES.
 """
 from __future__ import annotations
 
@@ -15,7 +13,7 @@ AI_PHRASES = ("note that", "it's worth noting", "here's the", "certainly,")
 
 
 def em_dash_overuse(code: str):
-    """The headline tell: text peppered with em-dashes."""
+    """Text peppered with em-dashes — the headline tell."""
     count = code.count("—")
     if count > EM_DASH_THRESHOLD:
         lines = [i for i, l in enumerate(code.splitlines(), 1) if "—" in l]
@@ -38,12 +36,8 @@ def generic_names(code: str):
 
 def ai_comment_phrases(code: str):
     """Comments that talk like a chatbot ('Note that...', 'Certainly,...')."""
-    lines = []
-    for i, line in enumerate(code.splitlines(), 1):
-        if "#" in line:
-            comment = line.split("#", 1)[1].lower()
-            if any(p in comment for p in AI_PHRASES):
-                lines.append(i)
+    lines = [i for i, line in enumerate(code.splitlines(), 1)
+             if "#" in line and any(p in line.split("#", 1)[1].lower() for p in AI_PHRASES)]
     if lines:
         return {"category": "ai_comment_phrases", "count": len(lines),
                 "lines": lines, "detail": "comment phrasing that smells AI-written"}

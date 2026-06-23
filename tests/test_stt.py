@@ -1,6 +1,4 @@
-"""STT tests — parse_transcript is a stub, so this is skipped until you fill it in."""
-import pytest
-
+"""STT tests — parse_transcript is the pure piece, unit-tested with a fake payload."""
 from whatyoudoin import stt
 
 FAKE_DEEPGRAM_RESPONSE = {
@@ -12,7 +10,6 @@ FAKE_DEEPGRAM_RESPONSE = {
 }
 
 
-@pytest.mark.skip(reason="implement stt.parse_transcript() first")
 def test_parse_transcript_pulls_text():
     assert (
         stt.parse_transcript(FAKE_DEEPGRAM_RESPONSE)

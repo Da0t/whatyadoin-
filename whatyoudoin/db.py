@@ -1,7 +1,6 @@
-"""SQLite storage for past sessions.
+"""SQLite storage for past fix sessions and the vibe-code tells found in them.
 
-Fully implemented — local persistence layer and the target of the database
-unit tests. Each explain/fix run is one row.
+Fully implemented and the target of the database unit tests.
 """
 from __future__ import annotations
 
@@ -15,7 +14,6 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS sessions (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at TEXT NOT NULL,
-    mode       TEXT NOT NULL,
     file_path  TEXT NOT NULL,
     transcript TEXT NOT NULL,
     response   TEXT NOT NULL
@@ -34,10 +32,7 @@ CREATE TABLE IF NOT EXISTS mistakes (
 
 
 def connect(db_path=DEFAULT_DB_PATH):
-    """Open a connection and make sure the table exists.
-
-    Pass ":memory:" for a throwaway in-memory database (used by the tests).
-    """
+    """Open a connection and ensure the tables exist. Pass ':memory:' for tests."""
     if db_path != ":memory:":
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path)
@@ -46,28 +41,18 @@ def connect(db_path=DEFAULT_DB_PATH):
     return conn
 
 
-def save_session(conn, mode: str, file_path: str, transcript: str, response: str) -> int:
-    """Insert one session ('explain' or 'fix') and return its new id."""
+def save_session(conn, file_path: str, transcript: str, response: str) -> int:
+    """Insert one fix session and return its new id."""
     cur = conn.execute(
-        "INSERT INTO sessions (created_at, mode, file_path, transcript, response) "
-        "VALUES (?, ?, ?, ?, ?)",
-        (
-            datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            mode,
-            file_path,
-            transcript,
-            response,
-        ),
+        "INSERT INTO sessions (created_at, file_path, transcript, response) VALUES (?, ?, ?, ?)",
+        (datetime.now(timezone.utc).isoformat(timespec="seconds"), file_path, transcript, response),
     )
     conn.commit()
     return cur.lastrowid
 
 
 def save_mistakes(conn, session_id, file_path: str, findings: list[dict]) -> int:
-    """Log each vibe-code finding from mistakes.scan(); return how many were saved.
-
-    Pass session_id=None to record a scan that isn't tied to a saved session yet.
-    """
+    """Log each vibe-code finding from mistakes.scan(); return how many were saved."""
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     conn.executemany(
         "INSERT INTO mistakes (session_id, created_at, file_path, category, detail, count) "
@@ -81,8 +66,7 @@ def save_mistakes(conn, session_id, file_path: str, findings: list[dict]) -> int
 def list_sessions(conn, limit: int = 20) -> list[dict]:
     """Return recent sessions, newest first (without the full response text)."""
     rows = conn.execute(
-        "SELECT id, created_at, mode, file_path, transcript "
-        "FROM sessions ORDER BY id DESC LIMIT ?",
+        "SELECT id, created_at, file_path, transcript FROM sessions ORDER BY id DESC LIMIT ?",
         (limit,),
     ).fetchall()
     return [dict(r) for r in rows]
@@ -90,7 +74,5 @@ def list_sessions(conn, limit: int = 20) -> list[dict]:
 
 def get_session(conn, session_id: int) -> dict | None:
     """Return one full session by id, or None if it doesn't exist."""
-    row = conn.execute(
-        "SELECT * FROM sessions WHERE id = ?", (session_id,)
-    ).fetchone()
+    row = conn.execute("SELECT * FROM sessions WHERE id = ?", (session_id,)).fetchone()
     return dict(row) if row else None

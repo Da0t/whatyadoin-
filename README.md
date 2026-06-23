@@ -1,85 +1,64 @@
 # whatyoudoin 🎙️
 
-Say what's wrong with your code out loud; Claude tells you. A tiny terminal
-tool with **two commands**:
+Say what's wrong with your code out loud; Claude comedically fixes it. One
+command, voice-driven, command line only:
 
 ```
-whatyoudoin buggy.py        # speak the problem → Claude explains what's broken
 whatyoudoin fix buggy.py    # speak the problem → Claude shows the fix
 ```
 
 You speak when prompted. Under the hood it: records your voice → transcribes it
-with **Deepgram** → sends your words + your code to **Claude** → prints the
-answer. Two authorized APIs, command line only, no GUI.
+with **Deepgram** → sends your words + your code to **Claude** → prints the fix.
+Two authorized APIs, no GUI.
 
 ## The problem it solves
 
-Beginner developers lose a big chunk of their time stuck on errors they can't
-yet put into words well enough to even search. `whatyoudoin` lets you describe
-the problem the way you'd say it to a friend, and turns that into a real answer.
-*(Add a citable stat here for the slide deck — e.g. a developer survey on time
-lost to debugging.)*
+Beginner developers lose hours stuck on errors they can't yet put into words well
+enough to even search. `whatyoudoin` lets you describe the problem the way you'd
+say it to a friend, and turns that into a real fix.
+_(Add a citable stat here for the slide — look up a developer-survey figure on
+time lost to debugging.)_
 
 ## Setup
 
 ```bash
-cd voicefix              # the project folder
+cd voicefix
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e .         # installs deps + the `whatyoudoin` command
-cp .env.example .env     # then paste in your two API keys
+pip install -e .          # installs the SDKs + the `whatyoudoin` command
+cp .env.example .env      # paste in your two API keys (they auto-load from .env)
 ```
 
 Keys come from [console.anthropic.com](https://console.anthropic.com) and
-[console.deepgram.com](https://console.deepgram.com). Load them into your shell
-(e.g. `export $(cat .env | xargs)`).
+[console.deepgram.com](https://console.deepgram.com).
 
-Then just:
+## Use it
 
 ```bash
-whatyoudoin buggy.py
-whatyoudoin fix buggy.py
-# (or, without installing: python -m whatyoudoin buggy.py)
+whatyoudoin fix buggy.py                   # speak your bug (records ~6s)
+whatyoudoin buggy.py                        # same — 'fix' is the only mode
+whatyoudoin fix buggy.py --file clip.wav    # use a recording instead of the mic
 ```
+
+Every run is saved to a local SQLite database (`~/.whatyoudoin/history.db`): the
+fix session **and** any "vibe code" tells it spots in your file (overused
+em-dashes, generic names, chatbot-y comments) — so the database does real work,
+not just box-checking.
 
 ## Project layout
 
 ```
 whatyoudoin/
-  __init__.py
-  __main__.py     # the two commands (explain default + fix) — handlers are stubs
-  audio.py        # record() / load()     — STUB
-  stt.py          # Deepgram transcribe()  — STUB
-  diagnose.py     # build_prompt() done; run() (Claude call) — STUB
-  db.py           # SQLite (silent session log) — IMPLEMENTED
-tests/            # test_db (3 pass), test_diagnose (2 pass), test_stt (skipped)
-pyproject.toml    # makes `whatyoudoin` a real command
-requirements.txt
-.env.example
+  __main__.py   # the `fix` command + the shared flow
+  audio.py      # record() / load()  — the voice capture
+  stt.py        # Deepgram transcribe()
+  diagnose.py   # build_prompt() + Claude run()
+  mistakes.py   # vibe-code tell scanner
+  db.py         # SQLite (sessions + mistakes)
+tests/          # 11 unit tests
 ```
-
-Every run is quietly saved to a small SQLite database (`~/.whatyoudoin/history.db`)
-— no extra command, it just satisfies the "useful database" rubric box.
-
-## What's done vs. stub
-
-**Done:** structure, the SQLite layer, the prompt builder, the CLI, and the
-tests (5 pass today). **To implement** — each has a step-by-step TODO in its
-docstring:
-- `audio.record` / `audio.load` — mic capture + file fallback
-- `stt.transcribe` / `stt.parse_transcript` — the Deepgram call + parsing
-- `diagnose.run` — the Claude `messages.create` call
-- `_run` in `__main__.py` — the glue both commands share
-- the two skipped tests (drop the `@pytest.mark.skip` once the code exists)
 
 ## Tests
 
 ```bash
-pip install pytest
-pytest -q
+pytest -q     # 11 passed
 ```
-
-## Ideas for v2
-
-- Detect the file's language and tailor the prompt.
-- Apply the fix to the file with a confirm step.
-- Stream Claude's answer token-by-token for a snappier demo.

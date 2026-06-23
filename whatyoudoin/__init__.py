@@ -1,8 +1,7 @@
-"""whatyoudoin — talk to Claude about your broken code.
+"""whatyoudoin — say what's broken out loud; Claude comedically fixes it.
 
-Describe a bug out loud; whatyoudoin transcribes it with Deepgram, sends it
-plus your code to Claude, and either **explains** the issue
-(`whatyoudoin explain`, the default) or proposes a **fix** (`whatyoudoin fix`).
+Records your voice, transcribes it with Deepgram, and sends it plus your code to
+Claude, which returns the fix (`whatyoudoin fix <file>`).
 """
 
 __version__ = "0.1.0"
