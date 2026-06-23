@@ -16,21 +16,30 @@ from __future__ import annotations
 import argparse
 import sys
 
-from . import audio, db, diagnose as diagnose_mod, stt
+from . import audio, db, diagnose as diagnose_mod, mistakes, stt
 
 
 def _run(mode: str, args) -> None:
-    """explain/fix share this: record -> transcribe -> Claude -> save -> print.
+    """explain/fix share this: scan for vibe-code tells -> log -> Claude.
 
-    TODO — implement:
-        wav = audio.load(args.file) if args.file else audio.record()
-        transcript = stt.transcribe(wav)
-        code = open(args.path).read()
-        answer = diagnose_mod.run(code, transcript, mode)
-        db.save_session(db.connect(), mode, args.path, transcript, answer)
-        print(answer)
+    The scan + log below works today (no API keys needed). The voice -> Claude
+    flow after it is still stubbed; wiring it up is the next step.
     """
-    raise NotImplementedError
+    code = open(args.path).read()
+    conn = db.connect()
+    findings = mistakes.scan(code)
+    db.save_mistakes(conn, None, args.path, findings)
+    if findings:
+        total = sum(f["count"] for f in findings)
+        print(f"🚩 Spotted {total} vibe-code tell(s) in {args.path} — logged to the history db.")
+
+    # TODO — voice -> Claude flow (needs audio/stt/diagnose stubs implemented):
+    #     wav = audio.load(args.file) if args.file else audio.record()
+    #     transcript = stt.transcribe(wav)
+    #     answer = diagnose_mod.run(code, transcript, mode)
+    #     db.save_session(conn, mode, args.path, transcript, answer)
+    #     print(answer)
+    print(f"(The voice → Claude '{mode}' step isn't wired up yet — only the scan ran.)")
 
 
 def cmd_explain(args):

@@ -20,6 +20,16 @@ CREATE TABLE IF NOT EXISTS sessions (
     transcript TEXT NOT NULL,
     response   TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS mistakes (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id INTEGER,
+    created_at TEXT NOT NULL,
+    file_path  TEXT NOT NULL,
+    category   TEXT NOT NULL,
+    detail     TEXT NOT NULL,
+    count      INTEGER NOT NULL
+);
 """
 
 
@@ -51,6 +61,21 @@ def save_session(conn, mode: str, file_path: str, transcript: str, response: str
     )
     conn.commit()
     return cur.lastrowid
+
+
+def save_mistakes(conn, session_id, file_path: str, findings: list[dict]) -> int:
+    """Log each vibe-code finding from mistakes.scan(); return how many were saved.
+
+    Pass session_id=None to record a scan that isn't tied to a saved session yet.
+    """
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    conn.executemany(
+        "INSERT INTO mistakes (session_id, created_at, file_path, category, detail, count) "
+        "VALUES (?, ?, ?, ?, ?, ?)",
+        [(session_id, now, file_path, f["category"], f["detail"], f["count"]) for f in findings],
+    )
+    conn.commit()
+    return len(findings)
 
 
 def list_sessions(conn, limit: int = 20) -> list[dict]:
