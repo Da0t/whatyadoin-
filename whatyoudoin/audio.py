@@ -1,7 +1,7 @@
-"""Record audio from the mic, or load an existing audio file (--file fallback).
+"""Record your voice from the mic, or load an existing clip (--file fallback).
 
-Both functions are stubs. `record` is the live-mic path; `load` is the
-foolproof fallback so a mic hiccup can't kill the live demo.
+Both are stubs. `record` is the live-mic path; `load` is the foolproof fallback
+so a mic hiccup can't kill the live demo.
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ def record(seconds: int = DEFAULT_SECONDS, sample_rate: int = SAMPLE_RATE) -> st
         path = tempfile.mktemp(suffix=".wav")
         sf.write(path, frames, sample_rate)
         return path
-    (macOS will prompt for microphone permission the first time you run this.)
+    (macOS will ask for microphone permission the first time you run this.)
     """
     raise NotImplementedError("Wire up mic recording — see the docstring.")
 
@@ -30,7 +30,7 @@ def record(seconds: int = DEFAULT_SECONDS, sample_rate: int = SAMPLE_RATE) -> st
 def load(path: str) -> str:
     """Return the path to an existing audio file, for the --file fallback.
 
-    TODO — validate the file exists and is readable; raise FileNotFoundError
-    with a friendly message otherwise, then return the path unchanged.
+    TODO — check the file exists; raise FileNotFoundError with a friendly
+    message otherwise, then return the path unchanged.
     """
     raise NotImplementedError

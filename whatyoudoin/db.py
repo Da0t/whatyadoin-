@@ -1,7 +1,7 @@
-"""SQLite storage for diagnosis sessions.
+"""SQLite storage for past sessions.
 
-This module is fully implemented — it's the local persistence layer and the
-target of the database unit tests. Each diagnosis run is one row.
+Fully implemented — local persistence layer and the target of the database
+unit tests. Each explain/fix run is one row.
 """
 from __future__ import annotations
 
@@ -9,12 +9,13 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
-DEFAULT_DB_PATH = Path.home() / ".voicefix" / "history.db"
+DEFAULT_DB_PATH = Path.home() / ".whatyoudoin" / "history.db"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS sessions (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at TEXT NOT NULL,
+    mode       TEXT NOT NULL,
     file_path  TEXT NOT NULL,
     transcript TEXT NOT NULL,
     response   TEXT NOT NULL
@@ -35,13 +36,14 @@ def connect(db_path=DEFAULT_DB_PATH):
     return conn
 
 
-def save_session(conn, file_path: str, transcript: str, response: str) -> int:
-    """Insert one diagnosis session and return its new id."""
+def save_session(conn, mode: str, file_path: str, transcript: str, response: str) -> int:
+    """Insert one session ('explain' or 'fix') and return its new id."""
     cur = conn.execute(
-        "INSERT INTO sessions (created_at, file_path, transcript, response) "
-        "VALUES (?, ?, ?, ?)",
+        "INSERT INTO sessions (created_at, mode, file_path, transcript, response) "
+        "VALUES (?, ?, ?, ?, ?)",
         (
             datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            mode,
             file_path,
             transcript,
             response,
@@ -54,7 +56,7 @@ def save_session(conn, file_path: str, transcript: str, response: str) -> int:
 def list_sessions(conn, limit: int = 20) -> list[dict]:
     """Return recent sessions, newest first (without the full response text)."""
     rows = conn.execute(
-        "SELECT id, created_at, file_path, transcript "
+        "SELECT id, created_at, mode, file_path, transcript "
         "FROM sessions ORDER BY id DESC LIMIT ?",
         (limit,),
     ).fetchall()

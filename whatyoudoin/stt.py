@@ -1,15 +1,13 @@
 """Speech-to-text via the Deepgram API.
 
-Both functions are stubs. `parse_transcript` is the pure, unit-testable piece;
-`transcribe` is the network call that wraps it.
+`parse_transcript` is the pure, unit-testable piece; `transcribe` is the
+network call that wraps it. Both are stubs.
 """
 from __future__ import annotations
 
 
 def transcribe(audio_path, *, client=None) -> str:
     """Transcribe a .wav/.mp3 file to text with Deepgram. Returns the transcript.
-
-    The optional ``client`` lets tests inject a fake Deepgram client.
 
     TODO — implement (verify the exact call against your installed deepgram-sdk
     version; the surface below matches deepgram-sdk v3):
@@ -31,6 +29,6 @@ def parse_transcript(response: dict) -> str:
     Keeping this separate from the network call makes it easy to unit-test with
     a fake payload (see tests/test_stt.py).
 
-    TODO — implement and return that nested string.
+    TODO — return that nested string.
     """
     raise NotImplementedError

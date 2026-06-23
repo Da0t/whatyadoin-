@@ -1,0 +1,24 @@
+[project]
+name = "whatyoudoin"
+version = "0.1.0"
+description = "Say what's wrong with your code; Claude tells you."
+requires-python = ">=3.9"
+dependencies = [
+    "anthropic>=0.69",
+    "deepgram-sdk>=3.7",
+    "sounddevice>=0.5",
+    "soundfile>=0.13",
+    "python-dotenv>=1.0",
+]
+
+# This is what makes `whatyoudoin` a real terminal command after
+# `pip install -e .` (instead of `python -m whatyoudoin`).
+[project.scripts]
+whatyoudoin = "whatyoudoin.__main__:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["whatyoudoin"]

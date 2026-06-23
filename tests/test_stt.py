@@ -1,7 +1,7 @@
 """STT tests — parse_transcript is a stub, so this is skipped until you fill it in."""
 import pytest
 
-from voicefix import stt
+from whatyoudoin import stt
 
 FAKE_DEEPGRAM_RESPONSE = {
     "results": {
