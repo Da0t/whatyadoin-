@@ -1,0 +1,6 @@
+anthropic>=0.69
+deepgram-sdk>=3.7
+sounddevice>=0.5
+soundfile>=0.13
+python-dotenv>=1.0
+pytest>=8.0
