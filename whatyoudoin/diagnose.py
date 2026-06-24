@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import re
 
-# Anthropic's current flagship model. Do NOT add a date suffix.
-MODEL = "claude-opus-4-8"
+# Claude Sonnet 4.6. Do NOT add a date suffix.
+MODEL = "claude-sonnet-4-6"
 
 SYSTEM_PROMPT = (
     "You are a sharp, witty senior engineer helping a beginner — funny and a little "
