@@ -1,8 +1,3 @@
-"""Capture the user's voice: record from the mic, or load a clip (--file fallback).
-
-This is the voice half of the tool — `record` grabs mic audio, `load` reuses a
-saved clip so a mic hiccup can't kill a live demo.
-"""
 from __future__ import annotations
 
 DEFAULT_SECONDS = 6
@@ -10,7 +5,6 @@ SAMPLE_RATE = 16_000
 
 
 def record(seconds: int = DEFAULT_SECONDS, sample_rate: int = SAMPLE_RATE) -> str:
-    """Record from the default mic and return a temp .wav path (macOS asks permission)."""
     import tempfile
 
     import sounddevice as sd
@@ -25,7 +19,6 @@ def record(seconds: int = DEFAULT_SECONDS, sample_rate: int = SAMPLE_RATE) -> st
 
 
 def load(path: str) -> str:
-    """Return the path to an existing audio file, for the --file fallback."""
     from pathlib import Path
 
     if not Path(path).is_file():

@@ -1,4 +1,3 @@
-"""SQLite storage — the tool's memory between `ask` (diagnose) and `fix` (apply)."""
 from __future__ import annotations
 
 import sqlite3
@@ -19,7 +18,6 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 
 def connect(db_path=DEFAULT_DB_PATH):
-    """Open a connection and ensure the table exists. Pass ':memory:' for tests."""
     if db_path != ":memory:":
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path)
@@ -29,7 +27,6 @@ def connect(db_path=DEFAULT_DB_PATH):
 
 
 def save_session(conn, file_path: str, transcript: str, response: str) -> int:
-    """Save one ask -> diagnosis session and return its new id."""
     cur = conn.execute(
         "INSERT INTO sessions (created_at, file_path, transcript, response) VALUES (?, ?, ?, ?)",
         (datetime.now(timezone.utc).isoformat(timespec="seconds"), file_path, transcript, response),
@@ -39,6 +36,5 @@ def save_session(conn, file_path: str, transcript: str, response: str) -> int:
 
 
 def latest_session(conn) -> dict | None:
-    """Return the most recently saved session (the 'memory' the `fix` step reads), or None."""
     row = conn.execute("SELECT * FROM sessions ORDER BY id DESC LIMIT 1").fetchone()
     return dict(row) if row else None

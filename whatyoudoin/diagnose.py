@@ -1,7 +1,3 @@
-"""Send the project's code + a spoken question to Claude; get a diagnosis + fix back.
-
-`extract_filename` / `extract_code` are pure (unit-tested); `run` makes the call.
-"""
 from __future__ import annotations
 
 import re
@@ -21,7 +17,6 @@ SYSTEM_PROMPT = (
 
 
 def build_prompt(code: str, transcript: str) -> str:
-    """Combine the spoken question and the project's code into one prompt (pure)."""
     return (
         f"Here's what I said:\n{transcript}\n\n"
         f"Here are my project files:\n{code}\n\n"
@@ -30,19 +25,16 @@ def build_prompt(code: str, transcript: str) -> str:
 
 
 def extract_filename(reply: str) -> str | None:
-    """Pull the `FILE: <name>` line Claude is told to emit."""
     m = re.search(r"^FILE:\s*(\S+)", reply, re.MULTILINE)
     return m.group(1) if m else None
 
 
 def extract_code(reply: str) -> str | None:
-    """Pull the first fenced code block (the corrected file) out of Claude's reply."""
     m = re.search(r"```(?:\w+)?\n(.*?)```", reply, re.DOTALL)
     return m.group(1).rstrip() + "\n" if m else None
 
 
 def run(code: str, transcript: str, *, client=None) -> str:
-    """Call Claude and return its reply. Inject ``client`` in tests (no network)."""
     if client is None:
         import anthropic
 
