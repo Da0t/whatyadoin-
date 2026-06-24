@@ -7,9 +7,16 @@ from pathlib import Path
 from . import audio, db, diagnose as diagnose_mod, stt
 
 
+_SKIP = {".venv", "venv", "__pycache__", ".git", "node_modules", "site-packages", ".pytest_cache", "build", "dist"}
+
+
 def _gather() -> str:
-    files = sorted(Path.cwd().glob("*.py"))
-    return "\n\n".join(f"# === {p.name} ===\n{p.read_text()}" for p in files)
+    root = Path.cwd()
+    files = [
+        p for p in sorted(root.rglob("*.py"))
+        if not any(part in _SKIP or part.startswith(".") for part in p.relative_to(root).parts)
+    ]
+    return "\n\n".join(f"# === {p.relative_to(root)} ===\n{p.read_text()}" for p in files)
 
 
 def _ask(args) -> None:
@@ -51,9 +58,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv=None) -> None:
     try:
-        from dotenv import find_dotenv, load_dotenv
+        from dotenv import load_dotenv
 
-        load_dotenv(find_dotenv(usecwd=True))
+        load_dotenv(Path(__file__).resolve().parent.parent / ".env")  # project .env, from any folder
     except ModuleNotFoundError:
         pass
 
