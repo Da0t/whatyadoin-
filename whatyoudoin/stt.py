@@ -1,15 +1,27 @@
 from __future__ import annotations
 
+import os
 
-def transcribe(audio_path, *, client=None) -> str:
-    from deepgram import DeepgramClient, PrerecordedOptions
+import httpx
 
-    dg = client or DeepgramClient()          # reads DEEPGRAM_API_KEY from env
+DEEPGRAM_URL = "https://api.deepgram.com/v1/listen"
+
+
+def transcribe(audio_path) -> str:
     with open(audio_path, "rb") as f:
-        source = {"buffer": f.read()}
-    options = PrerecordedOptions(model="nova-3", smart_format=True)
-    response = dg.listen.rest.v("1").transcribe_file(source, options)
-    return parse_transcript(response.to_dict())
+        audio = f.read()
+    resp = httpx.post(
+        DEEPGRAM_URL,
+        params={"model": "nova-3", "smart_format": "true"},
+        headers={
+            "Authorization": f"Token {os.environ['DEEPGRAM_API_KEY']}",
+            "Content-Type": "audio/wav",
+        },
+        content=audio,
+        timeout=60,
+    )
+    resp.raise_for_status()
+    return parse_transcript(resp.json())
 
 
 def parse_transcript(response: dict) -> str:
