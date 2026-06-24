@@ -38,3 +38,8 @@ def save_session(conn, file_path: str, transcript: str, response: str) -> int:
 def latest_session(conn) -> dict | None:
     row = conn.execute("SELECT * FROM sessions ORDER BY id DESC LIMIT 1").fetchone()
     return dict(row) if row else None
+
+
+def all_sessions(conn) -> list[dict]:
+    rows = conn.execute("SELECT * FROM sessions ORDER BY id DESC").fetchall()
+    return [dict(r) for r in rows]

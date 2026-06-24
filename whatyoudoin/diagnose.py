@@ -33,6 +33,17 @@ def extract_code(reply: str) -> str | None:
     return m.group(1).rstrip() + "\n" if m else None
 
 
+def extract_summary(reply: str) -> str:
+    # The explanation lines come after the fenced code block.
+    segments = reply.split("```")
+    tail = segments[-1] if len(segments) >= 3 else reply
+    for line in tail.strip().splitlines():
+        stripped = line.strip().lstrip("#").strip()
+        if stripped:
+            return stripped
+    return "(no summary)"
+
+
 def run(code: str, transcript: str, *, client=None) -> str:
     if client is None:
         import anthropic

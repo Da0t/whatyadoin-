@@ -42,6 +42,27 @@ def _fix(args) -> None:
     print(f"✏️  Applied the fix to {target} (original saved as {target}.bak).")
 
 
+def _mistakes(args) -> None:
+    from collections import Counter
+
+    sessions = db.all_sessions(db.connect())
+    if not sessions:
+        print("No mistakes recorded yet — run `whatyoudoin ask` first.")
+        return
+
+    counts: Counter = Counter()
+    latest_summary: dict[str, str] = {}
+    for s in sessions:  # newest first, so setdefault keeps the most recent summary
+        culprit = diagnose_mod.extract_filename(s["response"]) or "(no file identified)"
+        counts[culprit] += 1
+        latest_summary.setdefault(culprit, diagnose_mod.extract_summary(s["response"]))
+
+    print(f"🐛 Your mistakes so far ({len(sessions)} sessions):\n")
+    for culprit, n in counts.most_common():
+        print(f"  {n}×  {culprit}  — {latest_summary[culprit]}")
+    print("\n(grouped by the file Claude flagged)")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="whatyoudoin",
@@ -53,6 +74,8 @@ def build_parser() -> argparse.ArgumentParser:
     ask.set_defaults(func=_ask)
     fix = sub.add_parser("fix", help="Apply the fix Claude just suggested")
     fix.set_defaults(func=_fix)
+    mistakes = sub.add_parser("mistakes", help="Tally past bugs from your history database")
+    mistakes.set_defaults(func=_mistakes)
     return parser
 
 

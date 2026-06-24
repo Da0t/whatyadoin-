@@ -11,6 +11,14 @@ def test_extract_code():
     assert diagnose.extract_code(REPLY) == "print('ok')\n"
 
 
+def test_extract_summary_pulls_first_explanation_line():
+    assert diagnose.extract_summary(REPLY) == "What I changed"
+
+
+def test_extract_summary_handles_missing_block():
+    assert diagnose.extract_summary("no code here") == "no code here"
+
+
 def test_run_returns_claude_text_via_injected_client():
     class Block:
         type = "text"
