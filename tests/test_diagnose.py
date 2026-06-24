@@ -1,5 +1,15 @@
-"""Diagnose test — run() returns Claude's text via an injected fake client (no network)."""
+"""Diagnose tests — extract_filename / extract_code (pure) + run() with a fake client."""
 from whatyoudoin import diagnose
+
+REPLY = "FILE: buggy.py\n```python\nprint('ok')\n```\n## What I changed\nFixed the typo."
+
+
+def test_extract_filename():
+    assert diagnose.extract_filename(REPLY) == "buggy.py"
+
+
+def test_extract_code():
+    assert diagnose.extract_code(REPLY) == "print('ok')\n"
 
 
 def test_run_returns_claude_text_via_injected_client():
@@ -7,7 +17,7 @@ def test_run_returns_claude_text_via_injected_client():
 
     class Block:
         type = "text"
-        text = "your loop never updates i — line 3"
+        text = REPLY
 
     class Response:
         content = [Block()]
@@ -18,5 +28,5 @@ def test_run_returns_claude_text_via_injected_client():
             def create(**kwargs):
                 return Response()
 
-    out = diagnose.run("while True: pass", "it never stops", client=FakeClient())
-    assert out == "your loop never updates i — line 3"
+    out = diagnose.run("# === buggy.py ===\nprint(x)", "what's broken?", client=FakeClient())
+    assert "buggy.py" in out

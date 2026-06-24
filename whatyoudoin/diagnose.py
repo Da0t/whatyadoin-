@@ -1,31 +1,48 @@
-"""Send code + a spoken problem to Claude and get the fix back — comedically.
+"""Send the project's code + a spoken question to Claude; get a diagnosis + fix back.
 
-`build_prompt` is the pure, unit-tested piece; `run` makes the API call.
+`extract_filename` / `extract_code` are pure (unit-tested); `run` makes the call.
 """
 from __future__ import annotations
+
+import re
 
 # Anthropic's current flagship model. Do NOT add a date suffix.
 MODEL = "claude-opus-4-8"
 
 SYSTEM_PROMPT = (
-    "You are a sharp, witty senior engineer fixing a beginner's bug — funny and "
-    "a little cheeky, but always on their side (roast the bug, never the person). "
-    "Given their code and a spoken description of the problem, return the "
-    "corrected code in a code block, followed by one or two lines — with "
-    "personality — on exactly what you changed and why."
+    "You are a sharp, witty senior engineer helping a beginner — funny and a little "
+    "cheeky, but always on their side (roast the bug, never the person). You're given "
+    "all the .py files in their small project and a spoken question. Find the bug, then "
+    "reply in EXACTLY this shape:\n"
+    "FILE: <the filename to fix>\n"
+    "```\n<the complete corrected file>\n```\n"
+    "then 2-3 punchy lines on what was wrong and what you changed."
 )
 
 
 def build_prompt(code: str, transcript: str) -> str:
-    """Combine the spoken description and the code into one user prompt (pure)."""
+    """Combine the spoken question and the project's code into one prompt (pure)."""
     return (
-        f"Here is what I said is going wrong:\n{transcript}\n\n"
-        f"Here is my code:\n```\n{code}\n```\n\nFix it and show me the corrected code."
+        f"Here's what I said:\n{transcript}\n\n"
+        f"Here are my project files:\n{code}\n\n"
+        "What's wrong, and what's the fix?"
     )
 
 
+def extract_filename(reply: str) -> str | None:
+    """Pull the `FILE: <name>` line Claude is told to emit."""
+    m = re.search(r"^FILE:\s*(\S+)", reply, re.MULTILINE)
+    return m.group(1) if m else None
+
+
+def extract_code(reply: str) -> str | None:
+    """Pull the first fenced code block (the corrected file) out of Claude's reply."""
+    m = re.search(r"```(?:\w+)?\n(.*?)```", reply, re.DOTALL)
+    return m.group(1).rstrip() + "\n" if m else None
+
+
 def run(code: str, transcript: str, *, client=None) -> str:
-    """Call Claude and return its reply text. Inject ``client`` in tests (no network)."""
+    """Call Claude and return its reply. Inject ``client`` in tests (no network)."""
     if client is None:
         import anthropic
 

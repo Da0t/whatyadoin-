@@ -1,11 +1,10 @@
-"""Database test — save a session and read it back."""
+"""Database test — save a session, then read it back as the latest 'memory'."""
 from whatyoudoin import db
 
 
-def test_save_and_get_roundtrip():
+def test_save_then_latest_returns_it():
     conn = db.connect(":memory:")
-    sid = db.save_session(conn, "buggy.py", "it crashes sometimes", "fix line 3")
-    row = db.get_session(conn, sid)
-    assert row["file_path"] == "buggy.py"
-    assert row["transcript"] == "it crashes sometimes"
-    assert row["response"] == "fix line 3"
+    db.save_session(conn, "(project)", "what's wrong?", "FILE: a.py\n```\nx = 1\n```")
+    last = db.latest_session(conn)
+    assert last["transcript"] == "what's wrong?"
+    assert "a.py" in last["response"]

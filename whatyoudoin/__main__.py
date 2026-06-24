@@ -1,43 +1,59 @@
-"""whatyoudoin — say what's broken out loud; Claude comedically fixes it.
+"""whatyoudoin — ask what's wrong out loud; Claude finds it; say 'fix' and it fixes.
 
-    whatyoudoin fix buggy.py                   # speak the problem -> Claude shows the fix
-    whatyoudoin buggy.py                        # 'fix' is the only mode, so this works too
-    whatyoudoin fix buggy.py --file clip.wav    # use a recording instead of the mic
+    whatyoudoin ask   # 🎙️ speak your question -> Claude searches your project, says what's wrong + suggests a fix
+    whatyoudoin fix   # applies the fix Claude just suggested (remembered in SQLite)
 """
 from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
-from . import audio, db, diagnose as diagnose_mod, mistakes, stt
+from . import audio, db, diagnose as diagnose_mod, stt
 
 
-def _run(args) -> None:
-    """record -> transcribe -> Claude fix -> save session + log vibe-code tells -> print."""
-    code = open(args.path).read()
+def _gather() -> str:
+    """Read every .py file in the current folder into one labeled blob (small projects)."""
+    files = sorted(Path.cwd().glob("*.py"))
+    return "\n\n".join(f"# === {p.name} ===\n{p.read_text()}" for p in files)
 
+
+def _ask(args) -> None:
+    """🎙️ speak -> transcribe -> Claude diagnoses the project -> print + remember in SQLite."""
     wav = audio.load(args.file) if args.file else audio.record()
     transcript = stt.transcribe(wav)
-    answer = diagnose_mod.run(code, transcript)
-
-    conn = db.connect()
-    sid = db.save_session(conn, args.path, transcript, answer)
-    findings = mistakes.scan(code)
-    db.save_mistakes(conn, sid, args.path, findings)
-
+    answer = diagnose_mod.run(_gather(), transcript)
+    db.save_session(db.connect(), "(project)", transcript, answer)
     print(answer)
-    if findings:
-        total = sum(f["count"] for f in findings)
-        print(f"\n🚩 (Also logged {total} vibe-code tell(s) spotted in {args.path}.)")
+    print("\nSay it's good? Run `whatyoudoin fix` to apply this.")
+
+
+def _fix(args) -> None:
+    """Apply the fix Claude suggested last (read back from SQLite)."""
+    last = db.latest_session(db.connect())
+    if not last:
+        sys.exit("Nothing to fix yet — run `whatyoudoin ask` first.")
+    target = diagnose_mod.extract_filename(last["response"])
+    fixed = diagnose_mod.extract_code(last["response"])
+    if not (target and fixed):
+        sys.exit("Couldn't find a suggested fix to apply — try `whatyoudoin ask` again.")
+    if Path(target).exists():
+        Path(target + ".bak").write_text(Path(target).read_text())
+    Path(target).write_text(fixed)
+    print(f"✏️  Applied the fix to {target} (original saved as {target}.bak).")
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="whatyoudoin", description="Say what's broken; Claude fixes it.")
-    sub = parser.add_subparsers(dest="command")
-    fix = sub.add_parser("fix", help="Speak your bug; Claude shows the fix")
-    fix.add_argument("path", help="The code file to fix")
-    fix.add_argument("--file", help="Use this audio clip instead of the mic (demo fallback)")
-    fix.set_defaults(func=_run)
+    parser = argparse.ArgumentParser(
+        prog="whatyoudoin",
+        description="Ask what's wrong; Claude finds it; say fix and it fixes.",
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+    ask = sub.add_parser("ask", help="Speak your question; Claude diagnoses your project")
+    ask.add_argument("--file", help="Use this audio clip instead of the mic (demo fallback)")
+    ask.set_defaults(func=_ask)
+    fix = sub.add_parser("fix", help="Apply the fix Claude just suggested")
+    fix.set_defaults(func=_fix)
     return parser
 
 
@@ -50,13 +66,7 @@ def main(argv=None) -> None:
     except ModuleNotFoundError:
         pass
 
-    argv = list(sys.argv[1:] if argv is None else argv)
-    # Bare `whatyoudoin <file>` means `fix <file>`.
-    if argv and argv[0] not in ("fix", "-h", "--help"):
-        argv.insert(0, "fix")
-    args = build_parser().parse_args(argv)
-    if not getattr(args, "func", None):
-        build_parser().error("nothing to do — try: whatyoudoin fix buggy.py")
+    args = build_parser().parse_args(sys.argv[1:] if argv is None else argv)
     args.func(args)
 
 
