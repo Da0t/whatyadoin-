@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 
-# Claude Sonnet 4.6. Do NOT add a date suffix.
 MODEL = "claude-sonnet-4-6"
 
 SYSTEM_PROMPT = (
