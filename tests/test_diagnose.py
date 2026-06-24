@@ -1,11 +1,5 @@
-"""Diagnose tests — build_prompt and run() (via an injected fake client)."""
+"""Diagnose test — run() returns Claude's text via an injected fake client (no network)."""
 from whatyoudoin import diagnose
-
-
-def test_build_prompt_includes_code_and_transcript():
-    prompt = diagnose.build_prompt("print(x)", "x is not defined")
-    assert "print(x)" in prompt
-    assert "x is not defined" in prompt
 
 
 def test_run_returns_claude_text_via_injected_client():

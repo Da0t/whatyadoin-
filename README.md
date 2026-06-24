@@ -54,11 +54,12 @@ whatyoudoin/
   diagnose.py   # build_prompt() + Claude run()
   mistakes.py   # vibe-code tell scanner
   db.py         # SQLite (sessions + mistakes)
-tests/          # 11 unit tests
+tests/          # 5 unit tests
 ```
 
 ## Tests
 
 ```bash
-pytest -q     # 11 passed
+pip install pytest
+pytest -q     # 5 passed
 ```

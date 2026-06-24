@@ -63,15 +63,6 @@ def save_mistakes(conn, session_id, file_path: str, findings: list[dict]) -> int
     return len(findings)
 
 
-def list_sessions(conn, limit: int = 20) -> list[dict]:
-    """Return recent sessions, newest first (without the full response text)."""
-    rows = conn.execute(
-        "SELECT id, created_at, file_path, transcript FROM sessions ORDER BY id DESC LIMIT ?",
-        (limit,),
-    ).fetchall()
-    return [dict(r) for r in rows]
-
-
 def get_session(conn, session_id: int) -> dict | None:
     """Return one full session by id, or None if it doesn't exist."""
     row = conn.execute("SELECT * FROM sessions WHERE id = ?", (session_id,)).fetchone()
