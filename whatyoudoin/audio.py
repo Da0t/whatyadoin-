@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-DEFAULT_SECONDS = 6
+DEFAULT_SECONDS = 4
 SAMPLE_RATE = 16_000
 
 
