@@ -42,11 +42,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv=None) -> None:
-    # Auto-load API keys from a local .env (python-dotenv is a declared dep).
+    # Auto-load API keys from a local .env in the current dir (or a parent).
     try:
-        from dotenv import load_dotenv
+        from dotenv import find_dotenv, load_dotenv
 
-        load_dotenv()
+        load_dotenv(find_dotenv(usecwd=True))
     except ModuleNotFoundError:
         pass
 
