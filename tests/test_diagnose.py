@@ -1,4 +1,3 @@
-"""Diagnose tests — extract_filename / extract_code (pure) + run() with a fake client."""
 from whatyoudoin import diagnose
 
 REPLY = "FILE: buggy.py\n```python\nprint('ok')\n```\n## What I changed\nFixed the typo."
@@ -13,8 +12,6 @@ def test_extract_code():
 
 
 def test_run_returns_claude_text_via_injected_client():
-    """A fake client returns one text block; run() hands back its text — no network."""
-
     class Block:
         type = "text"
         text = REPLY

@@ -1,4 +1,3 @@
-"""STT tests — parse_transcript is the pure piece, unit-tested with a fake payload."""
 from whatyoudoin import stt
 
 FAKE_DEEPGRAM_RESPONSE = {

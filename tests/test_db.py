@@ -1,4 +1,3 @@
-"""Database test — save a session, then read it back as the latest 'memory'."""
 from whatyoudoin import db
 
 

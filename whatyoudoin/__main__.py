@@ -1,8 +1,3 @@
-"""whatyoudoin — ask what's wrong out loud; Claude finds it; say 'fix' and it fixes.
-
-    whatyoudoin ask   # 🎙️ speak your question -> Claude searches your project, says what's wrong + suggests a fix
-    whatyoudoin fix   # applies the fix Claude just suggested (remembered in SQLite)
-"""
 from __future__ import annotations
 
 import argparse
@@ -13,13 +8,11 @@ from . import audio, db, diagnose as diagnose_mod, stt
 
 
 def _gather() -> str:
-    """Read every .py file in the current folder into one labeled blob (small projects)."""
     files = sorted(Path.cwd().glob("*.py"))
     return "\n\n".join(f"# === {p.name} ===\n{p.read_text()}" for p in files)
 
 
 def _ask(args) -> None:
-    """🎙️ speak -> transcribe -> Claude diagnoses the project -> print + remember in SQLite."""
     wav = audio.load(args.file) if args.file else audio.record()
     transcript = stt.transcribe(wav)
     answer = diagnose_mod.run(_gather(), transcript)
@@ -29,7 +22,6 @@ def _ask(args) -> None:
 
 
 def _fix(args) -> None:
-    """Apply the fix Claude suggested last (read back from SQLite)."""
     last = db.latest_session(db.connect())
     if not last:
         sys.exit("Nothing to fix yet — run `whatyoudoin ask` first.")
@@ -58,7 +50,6 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv=None) -> None:
-    # Auto-load API keys from a local .env in the current dir (or a parent).
     try:
         from dotenv import find_dotenv, load_dotenv
 
