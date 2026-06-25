@@ -21,7 +21,9 @@ def _gather() -> str:
 
 def _ask(args) -> None:
     wav = audio.load(args.file) if args.file else audio.record()
+    print("Transcribing...", flush=True)
     transcript = stt.transcribe(wav)
+    print("Asking Claude...", flush=True)
     answer = diagnose_mod.run(_gather(), transcript)
     db.save_session(db.connect(), "(project)", transcript, answer)
     print(answer)

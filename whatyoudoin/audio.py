@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-DEFAULT_SECONDS = 3
+DEFAULT_SECONDS = 4
 SAMPLE_RATE = 16_000
 
 
@@ -10,7 +10,7 @@ def record(seconds: int = DEFAULT_SECONDS, sample_rate: int = SAMPLE_RATE) -> st
     import sounddevice as sd
     import soundfile as sf
 
-    print(f"🎙️  Recording for {seconds}s... speak now")
+    print(f"Recording for {seconds}s... speak now")
     frames = sd.rec(int(seconds * sample_rate), samplerate=sample_rate, channels=1)
     sd.wait()
     path = tempfile.mktemp(suffix=".wav")
