@@ -1,20 +1,32 @@
 from __future__ import annotations
 
-DEFAULT_SECONDS = 4
+import sys
+
 SAMPLE_RATE = 16_000
 
 
-def record(seconds: int = DEFAULT_SECONDS, sample_rate: int = SAMPLE_RATE) -> str:
+def record(sample_rate: int = SAMPLE_RATE) -> str:
     import tempfile
 
+    import numpy as np
     import sounddevice as sd
     import soundfile as sf
 
-    print(f"🎙️  Recording for {seconds}s... speak now")
-    frames = sd.rec(int(seconds * sample_rate), samplerate=sample_rate, channels=1)
-    sd.wait()
+    frames: list = []
+
+    def _callback(indata, frame_count, time_info, status):
+        frames.append(indata.copy())
+
+    print("🎙️  Recording... press Enter to stop")
+    with sd.InputStream(samplerate=sample_rate, channels=1, callback=_callback):
+        input()  # block here until the user hits Enter, then close the stream
+
+    if not frames:
+        sys.exit("🎙️  Didn't catch any audio — try again and speak before pressing Enter.")
+
+    audio = np.concatenate(frames, axis=0)
     path = tempfile.mktemp(suffix=".wav")
-    sf.write(path, frames, sample_rate)
+    sf.write(path, audio, sample_rate)
     return path
 
 

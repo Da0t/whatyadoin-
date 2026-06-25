@@ -4,8 +4,9 @@ Ask what's wrong with your code out loud; Claude searches your project, tells yo
 what's broken, and on your say-so fixes it. Voice-driven, command line only:
 
 ```
-whatyoudoin ask     # 🎙️ "what's wrong?" → Claude finds it + suggests a fix
-whatyoudoin fix     # applies that fix
+whatyoudoin ask         # 🎙️ "what's wrong?" → Claude finds it + suggests a fix
+whatyoudoin fix         # applies that fix
+whatyoudoin fix app.py  # ⚡ no voice: runs app.py, catches the crash, fixes it
 ```
 
 Under the hood: records your question and transcribes it with **Deepgram** → sends
@@ -40,8 +41,14 @@ Run it from inside the project folder you want to debug:
 ```bash
 whatyoudoin ask                  # 🎙️ ask "what's wrong?" → diagnosis + suggested fix
 whatyoudoin fix                  # apply the suggested fix
+whatyoudoin fix buggy.py         # ⚡ run buggy.py, capture the crash, fix it automatically
 whatyoudoin ask --file clip.wav  # use a recording instead of the mic
 ```
+
+`ask` records until you **press Enter** — talk as long as you need, no fixed timer.
+`fix <file>` skips the voice step entirely: it runs the script, feeds the actual
+traceback to Claude, applies the fix (original saved as `.bak`), then re-runs the
+file to confirm the crash is gone.
 
 The `ask` step saves the diagnosis to a local SQLite database
 (`~/.whatyoudoin/history.db`) — that's the "memory" the `fix` step reads back.

@@ -19,6 +19,15 @@ def test_extract_summary_handles_missing_block():
     assert diagnose.extract_summary("no code here") == "no code here"
 
 
+def test_build_error_transcript_includes_file_and_error():
+    transcript = diagnose.build_error_transcript(
+        "buggy.py", "ZeroDivisionError: division by zero"
+    )
+    assert "buggy.py" in transcript
+    assert "ZeroDivisionError" in transcript
+    assert "fix it" in transcript.lower()
+
+
 def test_run_returns_claude_text_via_injected_client():
     class Block:
         type = "text"

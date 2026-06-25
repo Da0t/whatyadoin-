@@ -28,18 +28,58 @@ def _ask(args) -> None:
     print("\nSay it's good? Run `whatyoudoin fix` to apply this.")
 
 
-def _fix(args) -> None:
-    last = db.latest_session(db.connect())
-    if not last:
-        sys.exit("Nothing to fix yet — run `whatyoudoin ask` first.")
-    target = diagnose_mod.extract_filename(last["response"])
-    fixed = diagnose_mod.extract_code(last["response"])
-    if not (target and fixed):
-        sys.exit("Couldn't find a suggested fix to apply — try `whatyoudoin ask` again.")
+def _apply_fix(target: str, fixed: str) -> None:
     if Path(target).exists():
         Path(target + ".bak").write_text(Path(target).read_text())
     Path(target).write_text(fixed)
     print(f"✏️  Applied the fix to {target} (original saved as {target}.bak).")
+
+
+def _fix(args) -> None:
+    if args.file:
+        _autofix_from_crash(args.file)
+        return
+    last = db.latest_session(db.connect())
+    if not last:
+        sys.exit("Nothing to fix yet — run `whatyoudoin ask` first, or `whatyoudoin fix <file>`.")
+    target = diagnose_mod.extract_filename(last["response"])
+    fixed = diagnose_mod.extract_code(last["response"])
+    if not (target and fixed):
+        sys.exit("Couldn't find a suggested fix to apply — try `whatyoudoin ask` again.")
+    _apply_fix(target, fixed)
+
+
+def _autofix_from_crash(file, *, run_script=None, client=None, conn=None) -> None:
+    from . import runner
+
+    run_script = run_script or runner.run_script
+    conn = conn or db.connect()
+
+    print(f"▶️  Running {file} ...")
+    code, _out, err = run_script(file)
+    if code == 0:
+        print(f"✅ {file} ran fine — nothing to fix.")
+        return
+
+    print("💥 It crashed. Asking Claude for the fix...")
+    transcript = diagnose_mod.build_error_transcript(file, err)
+    answer = diagnose_mod.run(_gather(), transcript, client=client)
+    db.save_session(conn, "(crash)", transcript, answer)
+
+    target = diagnose_mod.extract_filename(answer)
+    fixed = diagnose_mod.extract_code(answer)
+    if not (target and fixed):
+        print(answer)
+        sys.exit("Couldn't parse a fix from Claude's reply.")
+    _apply_fix(target, fixed)
+
+    # Verify the fix actually cleared the crash by re-running the same file.
+    code2, _out2, err2 = run_script(file)
+    if code2 == 0:
+        print(f"✅ Re-ran {file} — no more crash.")
+    else:
+        last_line = (err2.strip().splitlines() or ["(no output)"])[-1]
+        print(f"⚠️  Re-ran {file} but it's still crashing: {last_line}")
 
 
 def _mistakes(args) -> None:
@@ -72,7 +112,8 @@ def build_parser() -> argparse.ArgumentParser:
     ask = sub.add_parser("ask", help="Speak your question; Claude diagnoses your project")
     ask.add_argument("--file", help="Use this audio clip instead of the mic (demo fallback)")
     ask.set_defaults(func=_ask)
-    fix = sub.add_parser("fix", help="Apply the fix Claude just suggested")
+    fix = sub.add_parser("fix", help="Apply the last suggested fix, or pass a file to run-and-fix it")
+    fix.add_argument("file", nargs="?", help="Run this script, capture the crash, and fix it automatically")
     fix.set_defaults(func=_fix)
     mistakes = sub.add_parser("mistakes", help="Tally past bugs from your history database")
     mistakes.set_defaults(func=_mistakes)
