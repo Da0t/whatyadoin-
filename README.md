@@ -45,7 +45,7 @@ whatyoudoin fix buggy.py         # ⚡ run buggy.py, capture the crash, fix it a
 whatyoudoin ask --file clip.wav  # use a recording instead of the mic
 ```
 
-`ask` records for up to 4s — **tap `s` to stop early**.
+`ask` records for 2 seconds, then transcribes automatically.
 `fix <file>` skips the voice step entirely: it runs the script, feeds the actual
 traceback to Claude, and applies the fix (original saved as `.bak`).
 
