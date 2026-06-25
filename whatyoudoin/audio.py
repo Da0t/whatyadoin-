@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import select
 import sys
 
+DEFAULT_SECONDS = 4
 SAMPLE_RATE = 16_000
 
 
-def record(sample_rate: int = SAMPLE_RATE) -> str:
+def record(seconds: int = DEFAULT_SECONDS, sample_rate: int = SAMPLE_RATE) -> str:
     import tempfile
 
     import numpy as np
@@ -17,12 +19,15 @@ def record(sample_rate: int = SAMPLE_RATE) -> str:
     def _callback(indata, frame_count, time_info, status):
         frames.append(indata.copy())
 
-    print("🎙️  Recording... press Enter to stop")
+    print(f"🎙️  Recording (up to {seconds}s)... press Enter to stop early")
     with sd.InputStream(samplerate=sample_rate, channels=1, callback=_callback):
-        input()  # block here until the user hits Enter, then close the stream
+        # Stop on Enter, but never record longer than `seconds`.
+        ready, _, _ = select.select([sys.stdin], [], [], seconds)
+        if ready:
+            sys.stdin.readline()
 
     if not frames:
-        sys.exit("🎙️  Didn't catch any audio — try again and speak before pressing Enter.")
+        sys.exit("🎙️  Didn't catch any audio — try again.")
 
     audio = np.concatenate(frames, axis=0)
     path = tempfile.mktemp(suffix=".wav")

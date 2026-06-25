@@ -29,8 +29,11 @@ def _ask(args) -> None:
 
 
 def _apply_fix(target: str, fixed: str) -> None:
-    if Path(target).exists():
-        Path(target + ".bak").write_text(Path(target).read_text())
+    bak = Path(target + ".bak")
+    # Keep the first/pristine original — never let a re-run clobber it with an
+    # already-modified version.
+    if Path(target).exists() and not bak.exists():
+        bak.write_text(Path(target).read_text())
     Path(target).write_text(fixed)
     print(f"✏️  Applied the fix to {target} (original saved as {target}.bak).")
 
@@ -72,14 +75,6 @@ def _autofix_from_crash(file, *, run_script=None, client=None, conn=None) -> Non
         print(answer)
         sys.exit("Couldn't parse a fix from Claude's reply.")
     _apply_fix(target, fixed)
-
-    # Verify the fix actually cleared the crash by re-running the same file.
-    code2, _out2, err2 = run_script(file)
-    if code2 == 0:
-        print(f"✅ Re-ran {file} — no more crash.")
-    else:
-        last_line = (err2.strip().splitlines() or ["(no output)"])[-1]
-        print(f"⚠️  Re-ran {file} but it's still crashing: {last_line}")
 
 
 def _mistakes(args) -> None:

@@ -25,7 +25,7 @@ time lost to debugging.)_
 ## Setup
 
 ```bash
-cd voicefix
+cd whatyoudoin
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e .          # installs the SDKs + the `whatyoudoin` command
 cp .env.example .env      # paste in your two API keys (they auto-load from .env)
@@ -45,10 +45,9 @@ whatyoudoin fix buggy.py         # ⚡ run buggy.py, capture the crash, fix it a
 whatyoudoin ask --file clip.wav  # use a recording instead of the mic
 ```
 
-`ask` records until you **press Enter** — talk as long as you need, no fixed timer.
+`ask` records for up to 4s — **press Enter to stop early**.
 `fix <file>` skips the voice step entirely: it runs the script, feeds the actual
-traceback to Claude, applies the fix (original saved as `.bak`), then re-runs the
-file to confirm the crash is gone.
+traceback to Claude, and applies the fix (original saved as `.bak`).
 
 The `ask` step saves the diagnosis to a local SQLite database
 (`~/.whatyoudoin/history.db`) — that's the "memory" the `fix` step reads back.
@@ -61,6 +60,7 @@ whatyoudoin/
   audio.py      # record() / load()  — the voice capture
   stt.py        # Deepgram transcribe()
   diagnose.py   # build_prompt() + extract_filename/code() + Claude run()
+  runner.py     # runs a target script in a subprocess, captures the crash
   db.py         # SQLite (memory between ask and fix)
 tests/          # 5 unit tests
 ```
