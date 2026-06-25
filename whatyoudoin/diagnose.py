@@ -23,16 +23,6 @@ def build_prompt(code: str, transcript: str) -> str:
     )
 
 
-def build_error_transcript(filename: str, stderr: str) -> str:
-    # Stand in for the spoken question when a script crashes: feed Claude the
-    # real traceback so the `fix <file>` flow needs no voice input.
-    return (
-        f"I ran `{filename}` and it crashed with this error:\n"
-        f"{stderr.strip()}\n\n"
-        "Find the bug and fix it."
-    )
-
-
 def extract_filename(reply: str) -> str | None:
     m = re.search(r"^FILE:\s*(\S+)", reply, re.MULTILINE)
     return m.group(1) if m else None

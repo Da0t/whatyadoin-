@@ -65,7 +65,7 @@ def _autofix_from_crash(file, *, run_script=None, client=None, conn=None) -> Non
         return
 
     print("💥 It crashed. Asking Claude for the fix...")
-    transcript = diagnose_mod.build_error_transcript(file, err)
+    transcript = f"I ran `{file}` and it crashed:\n{err.strip()}\n\nFind the bug and fix it."
     answer = diagnose_mod.run(_gather(), transcript, client=client)
     db.save_session(conn, "(crash)", transcript, answer)
 
