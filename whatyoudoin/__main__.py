@@ -9,12 +9,22 @@ from . import audio, db, diagnose as diagnose_mod, stt
 
 _SKIP = {".venv", "venv", "__pycache__", ".git", "node_modules", "site-packages", ".pytest_cache", "build", "dist"}
 
+# Source files we know how to read, across languages. Claude can fix any of them;
+# this just decides what gets sent.
+_SOURCE_SUFFIXES = {
+    ".py", ".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx",
+    ".rb", ".go", ".rs", ".java", ".kt", ".swift",
+    ".c", ".h", ".cpp", ".hpp", ".cc", ".cs", ".php", ".sh",
+}
+
 
 def _gather() -> str:
     root = Path.cwd()
     files = [
-        p for p in sorted(root.rglob("*.py"))
-        if not any(part in _SKIP or part.startswith(".") for part in p.relative_to(root).parts)
+        p for p in sorted(root.rglob("*"))
+        if p.is_file()
+        and p.suffix in _SOURCE_SUFFIXES
+        and not any(part in _SKIP or part.startswith(".") for part in p.relative_to(root).parts)
     ]
     return "\n\n".join(f"# === {p.relative_to(root)} ===\n{p.read_text()}" for p in files)
 

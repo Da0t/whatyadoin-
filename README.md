@@ -10,7 +10,7 @@ whatyoudoin fix app.py  # ⚡ no voice: runs app.py, catches the crash, fixes it
 ```
 
 Under the hood: records your question and transcribes it with **Deepgram** → sends
-it plus all your project's `.py` files to **Claude** → Claude names the broken file
+it plus all your project's source files (any language) to **Claude** → Claude names the broken file
 and suggests the fix → it's remembered in **SQLite** → `fix` reads that back and
 writes the corrected file (saving the original as `.bak`). Two authorized APIs, no GUI.
 
